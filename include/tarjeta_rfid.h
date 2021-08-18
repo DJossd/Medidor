@@ -46,11 +46,11 @@ void readRFID(void)
         nuidPICC[i] = rfid.uid.uidByte[i];
     }
 
-    Serial.print(F("RFID In dec: "));
-    printDec(rfid.uid.uidByte, rfid.uid.size);
-    Serial.println();
+    //Serial.print(F("RFID In dec: "));
+    //printDec(rfid.uid.uidByte, rfid.uid.size);
+    //Serial.println();
 
-    Serial.print(F("RFID In dec: "));
+    Serial.print(F("RFID In hex: "));
     printHex(rfid.uid.uidByte, rfid.uid.size);
     Serial.println();
 

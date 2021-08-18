@@ -15,5 +15,7 @@ HardwareSerial SerialAT(1);
 #define LET_IN 4   //entrada de impulsos.
 
 // Tarjeta RFID
-#define SS_PIN 26
-#define RST_PIN 27
+#define SS_PIN 21
+#define RST_PIN 22
+
+

@@ -17,6 +17,9 @@ int pulsos = 0;
 void setup()
 {
 
+  pinMode(LET_IN, INPUT);
+  pinMode(LET_OUT, OUTPUT);
+
   Serial.begin(DEBUGER);
   SerialAT.begin(RASP_BAUD_RATE, SERIAL_8N1, RASP_RX, RASP_TX);
 
@@ -35,7 +38,7 @@ void loop()
 {
 
   readRFID();
-  
+
 }
 
 int contar_pulsos()
