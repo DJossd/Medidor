@@ -1,0 +1,25 @@
+//http://adrianmoya.com/2012/07/usando-git-de-manera-local/#sthash.PFdF8HAu.dpbs
+
+// git config --global user.name "Firstname Lastname"
+// git config --global user.email "your_email@youremail.com"
+
+// git config --global color.ui true
+// git init
+
+//crear rama nueva
+// git branch nombre_rama
+
+//informacion detallada de las ramas
+// git show-branch
+
+//cambiar de rama de trabajo
+// git checkout nombre_rama
+
+//crear rama y cambiar a ella en un solo comando
+// git checkout -b otra_rama
+
+//borrar rama en local
+// git branch -d rama_a_borrar
+
+//borrado forzado independiente si se unieron ramas 
+// git branch -D rama_a_borrar
