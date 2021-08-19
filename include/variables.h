@@ -1,0 +1,1 @@
+int estado = 0; //verifica que el json ingrese correctamente por serialAT
