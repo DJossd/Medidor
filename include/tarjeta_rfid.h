@@ -1,14 +1,15 @@
-
-//#include <SPI.h>
 #include <MFRC522.h>
 
 void printDec(byte *buffer, byte bufferSize);
 void printHex(byte *buffer, byte bufferSize);
+bool leer_tarjeta();
+void comparar_tarjeta();
 
-//Parameters
+String data_dec; //codigo de tarjeta en decimal.
+String data_hex; //codigo de tarjeta en hexadecimal
+
 const int ipaddress[4] = {103, 97, 67, 25};
 
-//Variables
 byte nuidPICC[4] = {0, 0, 0, 0};
 MFRC522::MIFARE_Key key;
 MFRC522 rfid = MFRC522(SS_PIN, RST_PIN);
@@ -16,7 +17,6 @@ MFRC522 rfid = MFRC522(SS_PIN, RST_PIN);
 void begin_rfid()
 {
 
-    //init rfid D8,D5,D6,D7
     SPI.begin();
     rfid.PCD_Init();
 
@@ -24,63 +24,81 @@ void begin_rfid()
     rfid.PCD_DumpVersionToSerial();
 }
 
-void readRFID(void)
-{ /* function readRFID */
-    ////Read RFID card
+bool leer_tarjeta()
+{
+
+    bool result = false;
 
     for (byte i = 0; i < 6; i++)
     {
         key.keyByte[i] = 0xFF;
     }
-    // Look for new 1 cards
+
     if (!rfid.PICC_IsNewCardPresent())
-        return;
+        return result = false;
 
-    // Verify if the NUID has been readed
     if (!rfid.PICC_ReadCardSerial())
-        return;
+        return result = false;
 
-    // Store NUID into nuidPICC array
-    for (byte i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++) // Store NUID into nuidPICC array
     {
         nuidPICC[i] = rfid.uid.uidByte[i];
     }
 
-    //Serial.print(F("RFID In dec: "));
-    //printDec(rfid.uid.uidByte, rfid.uid.size);
-    //Serial.println();
+    Serial.println();
+    Serial.print(F("RFID en dec: "));
+    printDec(rfid.uid.uidByte, rfid.uid.size);
+    Serial.println();
 
-    Serial.print(F("RFID In hex: "));
+    Serial.print(F("RFID en hex: "));
     printHex(rfid.uid.uidByte, rfid.uid.size);
     Serial.println();
 
-    // Halt PICC
-    rfid.PICC_HaltA();
+    Serial.println(data_dec);
+    Serial.println(data_hex);
 
-    // Stop encryption on PCD
-    rfid.PCD_StopCrypto1();
+    rfid.PICC_HaltA();      // Halt PICC
+    rfid.PCD_StopCrypto1(); // Stop encryption on PCD
+
+    return result = true;
 }
 
-/**
-   Helper routine to dump a byte array as hex values to Serial.
-*/
 void printHex(byte *buffer, byte bufferSize)
 {
+    data_hex = "";
+
     for (byte i = 0; i < bufferSize; i++)
     {
         Serial.print(buffer[i] < 0x10 ? " 0" : " ");
         Serial.print(buffer[i], HEX);
+
+        data_hex = data_hex + String(buffer[i], HEX);
     }
 }
 
-/**
-   Helper routine to dump a byte array as dec values to Serial.
-*/
 void printDec(byte *buffer, byte bufferSize)
 {
+
+    data_dec = "";
+
     for (byte i = 0; i < bufferSize; i++)
     {
         Serial.print(buffer[i] < 0x10 ? " 0" : " ");
         Serial.print(buffer[i], DEC);
+
+        data_dec = data_dec + String(buffer[i], DEC);
     }
+}
+
+void comparar_tarjeta()
+{
+
+    if (data_dec == "7311960164")
+    {
+
+        Serial.println("ingresa");
+    }
+    else
+
+        Serial.println("no ingresa");
 }

@@ -37,8 +37,10 @@ void setup()
 void loop()
 {
 
-  readRFID();
-
+  if (leer_tarjeta())
+  {
+    comparar_tarjeta();
+  }
 }
 
 int contar_pulsos()
