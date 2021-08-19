@@ -1,5 +1,8 @@
 #include <MFRC522.h>
 
+//leo tarjeta, envio a la rasp tarjeta, 
+//la rasp envia cuantos pulsos
+
 void printDec(byte *buffer, byte bufferSize);
 void printHex(byte *buffer, byte bufferSize);
 bool leer_tarjeta();
@@ -22,12 +25,16 @@ void begin_rfid()
 
     Serial.print(F("Reader :"));
     rfid.PCD_DumpVersionToSerial();
+
+    Serial.print("ID Modulo: ");
+    Serial.println(ID_Modulo);
 }
 
 bool leer_tarjeta()
 {
 
     bool result = false;
+    DynamicJsonDocument data_tarjeta(512);
 
     for (byte i = 0; i < 6; i++)
     {
@@ -56,6 +63,11 @@ bool leer_tarjeta()
 
     Serial.println(data_dec);
     Serial.println(data_hex);
+
+    data_tarjeta["ID modulo"] = ID_Modulo;
+    data_tarjeta["UID"] = data_dec;
+
+    serializeJson(data_tarjeta, Serial);
 
     rfid.PICC_HaltA();      // Halt PICC
     rfid.PCD_StopCrypto1(); // Stop encryption on PCD

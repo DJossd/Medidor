@@ -1,5 +1,16 @@
+
+/*
+Comandos 
+
+- asignar ID al modulo
+{"SetID":1,"Modulo":"coloca aqui el ID"}
+
+
+*/
+
 #include <Arduino.h>
 #include <ArduinoJson.h>
+#include <Splitter.h>
 
 #include "variables.h"
 #include "utilidad.h"
@@ -12,6 +23,9 @@ int contar_pulsos();
 int contador_impulsos; //Conteo de impulsos.
 int Valor_inicial = 0; //valor inicial.
 int pulsos = 0;
+
+  String comandos = "";
+  int pos1, pos2;
 
 void setup()
 {
@@ -30,6 +44,7 @@ void setup()
   Serial.print("Timeout DEBUGER: ");
   Serial.println(Serial.getTimeout()); // print the new value
 
+  begin_Eeprom();
   begin_rfid();
 }
 
@@ -62,13 +77,11 @@ int contar_pulsos()
 }
 
 bool comandos_de_entrada()
-{ 
+{
 
   bool check;
-  
-  String comandos = "";
 
-  DynamicJsonDocument data_doc(2048);
+  DynamicJsonDocument data_doc(2046);
 
   if (Serial.available())
   {
@@ -80,19 +93,19 @@ bool comandos_de_entrada()
       //String command = Serial.readStringUntil('\n');
       //Serial.println(chat);
 
-      comandos = "Msg:/ " + chat;
+      comandos = "Msg:/" + chat;
     }
 
     //{"Ajuste":[1000,1,0],"Signal":20,"Posiciones":["","","","","",""]}
 
     Serial.println(comandos);
 
-    if (comandos.indexOf("Msg:/ ") >= 0)
+    if (comandos.indexOf("Msg:/") >= 0)
     {
 
-      int pos1 = comandos.indexOf("{");
-      int pos2 = comandos.indexOf(comandos.length());
-      String JSON = comandos.substring(pos1, pos2);
+      pos1 = comandos.indexOf('{');
+      pos2 = comandos.indexOf('}');
+      String JSON = comandos.substring(pos1, pos2+1);
 
       Serial.print("Recibe: ");
       Serial.println(JSON);
@@ -101,7 +114,7 @@ bool comandos_de_entrada()
       DeserializationError error = deserializeJson(data_doc, JSON);
       if (error)
       {
-        
+
         Serial.println("JSON fail.");
         Serial.flush();
         check = false;
@@ -114,13 +127,32 @@ bool comandos_de_entrada()
         //serializeJson(data_doc, Serial);
         Serial.println();
 
-        //if (data_doc["Estado"])
-          estado = data_doc["Estado"];
+        //if (data_doc["Estado"] != null)
+          Estado = data_doc["Estado"];
 
-        if (estado == 1)
+        if (Estado == 1)
         {
 
           Serial.println("status on");
+          check = true;
+        }
+
+        //if (data_doc["SetID"] != null)
+          Set_ID = data_doc["SetID"];
+
+        if (Set_ID == 1)
+        {
+
+          Serial.println("Set ID Modulo on");
+
+          const char* ID = data_doc["Modulo"];
+          ID_Modulo = String(ID);
+
+          Serial.print("ID Modulo: ");
+          Serial.println(ID_Modulo);
+
+          Write_EEPROM();
+
           check = true;
         }
       }
