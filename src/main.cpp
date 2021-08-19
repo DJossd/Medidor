@@ -2,8 +2,14 @@
 /*
 Comandos 
 
-- asignar ID al modulo
+- Asignar ID al modulo
 {"SetID":1,"Modulo":"coloca aqui el ID"}
+
+- Iniciar llenado
+{"Estado":1,"Cantidad":10}
+
+- Detener llenado
+{"Estado":2}
 
 
 */
@@ -19,13 +25,9 @@ Comandos
 
 bool comandos_de_entrada();
 int contar_pulsos();
+void proceso_de_llenado(float cantidad);
 
-int contador_impulsos; //Conteo de impulsos.
-int Valor_inicial = 0; //valor inicial.
-int pulsos = 0;
-
-  String comandos = "";
-  int pos1, pos2;
+long time_out_llenado;
 
 void setup()
 {
@@ -46,34 +48,20 @@ void setup()
 
   begin_Eeprom();
   begin_rfid();
+
+  time_out_llenado = millis();
 }
 
 void loop()
 {
 
   comandos_de_entrada();
+  proceso_de_llenado(cantidad);
 
   if (leer_tarjeta())
   {
     comparar_tarjeta();
   }
-}
-
-int contar_pulsos()
-{
-
-  Valor_inicial = digitalRead(LET_IN);
-  if (Valor_inicial != 1)
-  {
-
-    contador_impulsos++;
-    while (digitalRead(LET_IN) != 1)
-    {
-      delay(30);
-    }
-  }
-
-  return contador_impulsos;
 }
 
 bool comandos_de_entrada()
@@ -82,6 +70,7 @@ bool comandos_de_entrada()
   bool check;
 
   DynamicJsonDocument data_doc(2046);
+  String comandos = "";
 
   if (Serial.available())
   {
@@ -96,16 +85,14 @@ bool comandos_de_entrada()
       comandos = "Msg:/" + chat;
     }
 
-    //{"Ajuste":[1000,1,0],"Signal":20,"Posiciones":["","","","","",""]}
-
     Serial.println(comandos);
 
     if (comandos.indexOf("Msg:/") >= 0)
     {
 
-      pos1 = comandos.indexOf('{');
-      pos2 = comandos.indexOf('}');
-      String JSON = comandos.substring(pos1, pos2+1);
+      int pos1 = comandos.indexOf('{');
+      int pos2 = comandos.indexOf('}');
+      String JSON = comandos.substring(pos1, pos2 + 1);
 
       Serial.print("Recibe: ");
       Serial.println(JSON);
@@ -128,24 +115,42 @@ bool comandos_de_entrada()
         Serial.println();
 
         //if (data_doc["Estado"] != null)
-          Estado = data_doc["Estado"];
+        Estado = data_doc["Estado"];
 
-        if (Estado == 1)
+        switch (Estado)
         {
-
+        case 1:
           Serial.println("status on");
+
+          cantidad = data_doc["Cantidad"];
+          status = "refueling";
+
+          time_out_llenado = millis();
+
           check = true;
+
+          break;
+
+        case 2:
+
+          Serial.println("status off");
+
+          status = "stoping";
+          Serial.printf("%s - forzado\n", status);
+
+          check = true;
+          break;
         }
 
         //if (data_doc["SetID"] != null)
-          Set_ID = data_doc["SetID"];
+        Set_ID = data_doc["SetID"];
 
         if (Set_ID == 1)
         {
 
           Serial.println("Set ID Modulo on");
 
-          const char* ID = data_doc["Modulo"];
+          const char *ID = data_doc["Modulo"];
           ID_Modulo = String(ID);
 
           Serial.print("ID Modulo: ");
@@ -163,4 +168,67 @@ bool comandos_de_entrada()
   }
 
   return check;
+}
+
+int contar_pulsos()
+{
+
+  Valor_inicial = digitalRead(LET_IN);
+  if (Valor_inicial != 1)
+  {
+
+    contador_impulsos++;
+
+    while (digitalRead(LET_IN) != 1)
+    {
+      delay(30);
+    }
+
+    time_out_llenado = millis();
+  }
+
+  return contador_impulsos;
+}
+
+void proceso_de_llenado(float cantidad)
+{
+
+  if (status == "refueling")
+  {
+
+    digitalWrite(LET_OUT, HIGH);
+    Serial.println(status);
+
+    if (pulsos < cantidad)
+    {
+
+      pulsos = contar_pulsos();
+      Serial.println(pulsos);
+      delay(30);
+    }
+
+    else
+    {
+      status = "stoping";
+      Serial.printf("%s - llenado\n", status);
+    }
+
+    if (millis() > time_out_llenado + TIME_OUT_LLENADO)
+    {
+
+      status = "stoping";
+      Serial.printf("%s - timeout\n", status);
+ 
+      time_out_llenado = millis();
+    }
+  }
+
+  else
+  {
+
+    digitalWrite(LET_OUT, LOW);
+    contador_impulsos = 0;
+    cantidad = 0;
+    pulsos = 0;
+  }
 }

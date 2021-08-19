@@ -4,6 +4,8 @@ HardwareSerial SerialAT(1);
 #define Serial Serial
 #define SerialAT Serial1
 
+#define TIME_OUT_LLENADO 10000
+
 #define RASP_TX 17
 #define RASP_RX 16
 #define RASP_BAUD_RATE 19200

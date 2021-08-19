@@ -64,10 +64,11 @@ bool leer_tarjeta()
     Serial.println(data_dec);
     Serial.println(data_hex);
 
-    data_tarjeta["ID modulo"] = ID_Modulo;
+    data_tarjeta["IDModulo"] = ID_Modulo;
     data_tarjeta["UID"] = data_dec;
 
     serializeJson(data_tarjeta, Serial);
+    Serial.println();
 
     rfid.PICC_HaltA();      // Halt PICC
     rfid.PCD_StopCrypto1(); // Stop encryption on PCD
