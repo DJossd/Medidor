@@ -1,17 +1,30 @@
 
 /*
-Comandos 
+Comandos de entrada
 
 - Asignar ID al modulo
 {"SetID":1,"Modulo":"coloca aqui el ID"}
 
 - Iniciar llenado
-{"Estado":1,"Cantidad":10}
+{"Estado":1,"Cantidad":10.1}
 
-- Detener llenado
+- Detener llenado (forzado)
 {"Estado":2}
 
 
+Comandos de salida
+
+- ID de modulo y ID de tarjeta
+{"IDModulo":"coloca aqui el ID","UID":"7311960164"}
+
+- indica inicio de llenado
+{"Status":refueling}
+
+- indica fin de llenado (forzado por comando, fin de llenado, timeout)
+{"Status":stopin}
+
+- pulsos de entrada sensor
+{"Pulsos":100}
 */
 
 #include <Arduino.h>
@@ -26,6 +39,8 @@ Comandos
 bool comandos_de_entrada();
 int contar_pulsos();
 void proceso_de_llenado(float cantidad);
+
+DynamicJsonDocument data(128);
 
 long time_out_llenado;
 
@@ -70,6 +85,7 @@ bool comandos_de_entrada()
   bool check;
 
   DynamicJsonDocument data_doc(2046);
+
   String comandos = "";
 
   if (Serial.available())
@@ -121,12 +137,16 @@ bool comandos_de_entrada()
         {
         case 1:
           Serial.println("status on");
+          status = "refueling";
+          Serial.printf("%s - inicio de llenado\n", status);
 
           cantidad = data_doc["Cantidad"];
-          status = "refueling";
+
+          data["Status"] = status;
+          serializeJson(data, Serial);
+          Serial.println();
 
           time_out_llenado = millis();
-
           check = true;
 
           break;
@@ -134,9 +154,12 @@ bool comandos_de_entrada()
         case 2:
 
           Serial.println("status off");
-
           status = "stoping";
           Serial.printf("%s - forzado\n", status);
+
+          data["Status"] = status;
+          serializeJson(data, Serial);
+          Serial.println();
 
           check = true;
           break;
@@ -193,17 +216,21 @@ int contar_pulsos()
 void proceso_de_llenado(float cantidad)
 {
 
+  float cantidad_pulsos = (cantidad * 10) - 0.000001;
+
   if (status == "refueling")
   {
 
     digitalWrite(LET_OUT, HIGH);
-    Serial.println(status);
+    //Serial.println(status);
 
-    if (pulsos < cantidad)
+    if (pulsos < cantidad_pulsos)
     {
 
       pulsos = contar_pulsos();
-      Serial.println(pulsos);
+      Serial.printf("{\"Pulsos\":%i} - Total pulsos: %f\n", pulsos, cantidad_pulsos);
+      //Serial.println(pulsos);
+
       delay(30);
     }
 
@@ -211,6 +238,10 @@ void proceso_de_llenado(float cantidad)
     {
       status = "stoping";
       Serial.printf("%s - llenado\n", status);
+
+      data["Status"] = status;
+      serializeJson(data, Serial);
+      Serial.println();
     }
 
     if (millis() > time_out_llenado + TIME_OUT_LLENADO)
@@ -218,7 +249,11 @@ void proceso_de_llenado(float cantidad)
 
       status = "stoping";
       Serial.printf("%s - timeout\n", status);
- 
+
+      data["Status"] = status;
+      serializeJson(data, Serial);
+      Serial.println();
+
       time_out_llenado = millis();
     }
   }

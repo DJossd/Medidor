@@ -8,8 +8,8 @@ HardwareSerial SerialAT(1);
 
 #define RASP_TX 17
 #define RASP_RX 16
-#define RASP_BAUD_RATE 19200
-#define DEBUGER 19200
+#define RASP_BAUD_RATE 115200
+#define DEBUGER 115200
 #define null 0
 
 // Controlador
